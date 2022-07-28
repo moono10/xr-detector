@@ -20,6 +20,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 
 import com.smartfarm.common.rendering.geometry.LineString;
+import com.smartfarm.core.Color4;
 
 import java.io.IOException;
 
@@ -47,14 +48,9 @@ public class LineRenderer {
   private int numPoints = 0;
 
 
-  private float r;
-  private float g;
-  private float b;
-  public LineRenderer(float r, float g, float b) {
-    this.r = r;
-    this.g = g;
-    this.b = b;
-  }
+  private Color4 color4;
+
+
 
   public void createOnGlThread(Context context) throws IOException {
     ShaderUtil.checkGLError(TAG, "before create");
@@ -97,6 +93,8 @@ public class LineRenderer {
 
     ShaderUtil.checkGLError(TAG, "before update");
 
+    color4 = linestring.getColor4();
+
     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);     //VBO 버퍼 사용시작.
 
     numPoints = linestring.getPoints().remaining() / FLOATS_PER_POINT;
@@ -125,7 +123,7 @@ public class LineRenderer {
     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);                                                         //VBO 버퍼 사용시작.
     GLES20.glVertexAttribPointer(positionAttribute, 4, GLES20.GL_FLOAT, false, BYTES_PER_POINT, 0);
 
-    GLES20.glUniform4f(colorUniform, r, g, b, 1.0f);   //컬러 변수 넘김
+    GLES20.glUniform4f(colorUniform, color4.getR(), color4.getG(), color4.getB(), color4.getA());   //컬러 변수 넘김
     GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjection, 0);        //MVP 변수 넘김
     
     GLES20.glLineWidth(5f);
