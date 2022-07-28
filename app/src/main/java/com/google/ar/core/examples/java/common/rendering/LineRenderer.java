@@ -32,8 +32,8 @@ public class LineRenderer {
   private static final String VERTEX_SHADER_NAME = "shaders/line.vert";
   private static final String FRAGMENT_SHADER_NAME = "shaders/line.frag";
 
-  private static final int BYTES_PER_FLOAT = Float.SIZE / 8;          // float = 4byte
-  private static final int FLOATS_PER_POINT = 4; // X,Y,Z,confidence. // 점 하나당 float 갯수
+  private static final int BYTES_PER_FLOAT = Float.SIZE / 8;                      // float = 4byte
+  private static final int FLOATS_PER_POINT = 4; // X,Y,Z,confidence.             // 점 하나당 float 갯수
   private static final int BYTES_PER_POINT = BYTES_PER_FLOAT * FLOATS_PER_POINT;  //점하나당 32byte
   private static final int INITIAL_BUFFER_POINTS = 1000;
 
