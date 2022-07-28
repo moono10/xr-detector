@@ -19,8 +19,10 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.util.Log;
 
 import com.google.ar.core.PointCloud;
+import com.google.ar.core.examples.java.common.rendering.geometry.LineString;
 
 import java.io.IOException;
 
@@ -48,7 +50,14 @@ public class LineRenderer {
   private int numPoints = 0;
 
 
-  public LineRenderer() {}
+  private float r;
+  private float g;
+  private float b;
+  public LineRenderer(float r, float g, float b) {
+    this.r = r;
+    this.g = g;
+    this.b = b;
+  }
 
   public void createOnGlThread(Context context) throws IOException {
     ShaderUtil.checkGLError(TAG, "before create");
@@ -87,20 +96,20 @@ public class LineRenderer {
    * Updates the OpenGL buffer contents to the provided point. Repeated calls with the same point
    * cloud will be ignored.
    */
-  public void update(PointCloud cloud) {
+  public void update(LineString linestring) {
 
     ShaderUtil.checkGLError(TAG, "before update");
 
     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);     //VBO 버퍼 사용시작.
 
-    numPoints = cloud.getPoints().remaining() / FLOATS_PER_POINT;
+    numPoints = linestring.getPoints().remaining() / FLOATS_PER_POINT;
     if (numPoints * BYTES_PER_POINT > vboSize) {
       while (numPoints * BYTES_PER_POINT > vboSize) {
         vboSize *= 2;
       }
       GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vboSize, null, GLES20.GL_DYNAMIC_DRAW);         //VBO 버퍼 NULL로 채움
     }
-    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, numPoints * BYTES_PER_POINT, cloud.getPoints());
+    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, numPoints * BYTES_PER_POINT, linestring.getPoints());
 
     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);   //VBO 버퍼 사용종료.
 
@@ -119,10 +128,10 @@ public class LineRenderer {
     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);                                                         //VBO 버퍼 사용시작.
     GLES20.glVertexAttribPointer(positionAttribute, 4, GLES20.GL_FLOAT, false, BYTES_PER_POINT, 0);
 
-    GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);   //컬러 변수 넘김
+    GLES20.glUniform4f(colorUniform, r, g, b, 1.0f);   //컬러 변수 넘김
     GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjection, 0);        //MVP 변수 넘김
     
-    GLES20.glLineWidth(120f);
+    GLES20.glLineWidth(5f);
     GLES20.glDrawArrays(GLES20.GL_LINES, 0, numPoints);
     GLES20.glDisableVertexAttribArray(positionAttribute);                                                    //POSITION 속성 활성 종료
     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);                                                       //VBO 버퍼 사용종료.

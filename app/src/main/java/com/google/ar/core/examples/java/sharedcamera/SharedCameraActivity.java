@@ -73,10 +73,14 @@ import com.google.ar.core.examples.java.common.helpers.SnackbarHelper;
 import com.google.ar.core.examples.java.common.helpers.TapHelper;
 import com.google.ar.core.examples.java.common.helpers.TrackingStateHelper;
 import com.google.ar.core.examples.java.common.rendering.BackgroundRenderer;
+import com.google.ar.core.examples.java.common.rendering.LineRenderer;
 import com.google.ar.core.examples.java.common.rendering.ObjectRenderer;
 import com.google.ar.core.examples.java.common.rendering.ObjectRenderer.BlendMode;
 import com.google.ar.core.examples.java.common.rendering.PlaneRenderer;
 import com.google.ar.core.examples.java.common.rendering.PointCloudRenderer;
+import com.google.ar.core.examples.java.common.rendering.geometry.LineString;
+import com.google.ar.core.examples.java.common.rendering.geometry.Ray;
+import com.google.ar.core.examples.java.common.rendering.geometry.Vector3;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.UnavailableException;
 import com.google.mlkit.common.model.LocalModel;
@@ -92,6 +96,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.io.IOException;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -200,6 +205,11 @@ public class SharedCameraActivity extends AppCompatActivity
   private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
   private final PlaneRenderer planeRenderer = new PlaneRenderer();
   private final PointCloudRenderer pointCloudRenderer = new PointCloudRenderer();
+  private final LineRenderer xAxislineRenderer = new LineRenderer(255.0f/ 255.0f, 0.0f/ 255.0f, 0.0f/ 255.0f);
+  private final LineRenderer yAxislineRenderer = new LineRenderer(0f/ 255.0f, 255.0f/ 255.0f, 0.0f/ 255.0f);
+  private final LineRenderer zAxislineRenderer = new LineRenderer(0f/ 255.0f, 0.0f/ 255.0f, 255.0f/ 255.0f);
+
+  private final LineRenderer rayLineRenderer = new LineRenderer(255.0f/ 255.0f, 255.0f/ 255.0f, 255.0f/ 255.0f);
 
   // Temporary matrix allocated here to reduce number of allocations for each frame.
   private final float[] anchorMatrix = new float[16];
@@ -869,6 +879,10 @@ public class SharedCameraActivity extends AppCompatActivity
       backgroundRenderer.createOnGlThread(this);
       planeRenderer.createOnGlThread(this, "models/trigrid.png");
       pointCloudRenderer.createOnGlThread(this);
+      xAxislineRenderer.createOnGlThread(this);
+      yAxislineRenderer.createOnGlThread(this);
+      zAxislineRenderer.createOnGlThread(this);
+      rayLineRenderer.createOnGlThread(this);
 
       virtualObject.createOnGlThread(this, "models/andy.obj", "models/andy.png");
       virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
@@ -877,6 +891,26 @@ public class SharedCameraActivity extends AppCompatActivity
           this, "models/andy_shadow.obj", "models/andy_shadow.png");
       virtualObjectShadow.setBlendMode(BlendMode.Shadow);
       virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
+
+      LineString lsx = new LineString();
+
+      lsx.getPointList().add(new Vector3(0,0,0));
+      lsx.getPointList().add(new Vector3(1000, 0, 0));
+
+      xAxislineRenderer.update(lsx);
+      LineString lsz = new LineString();
+
+      lsz.getPointList().add(new Vector3(0,0,0));
+      lsz.getPointList().add(new Vector3(0, 0, 1000));
+
+      zAxislineRenderer.update(lsz);
+
+      LineString lsy = new LineString();
+
+      lsy.getPointList().add(new Vector3(0,0,0));
+      lsy.getPointList().add(new Vector3(0, 1000, 0));
+
+      yAxislineRenderer.update(lsy);
 
       openCamera();
     } catch (IOException e) {
@@ -957,6 +991,12 @@ public class SharedCameraActivity extends AppCompatActivity
     backgroundRenderer.draw(size.getWidth(), size.getHeight(), displayAspectRatio, rotationDegrees);
   }
   private int cnt = 0;
+
+  private LineString rays = new LineString();
+
+  private List<Ray> rays2 = new ArrayList<>();
+  private Integer removeIndex = null;
+
   // Draw frame when in AR mode. Called on the GL thread.
   public void onDrawFrameARCore() throws CameraNotAvailableException, MqttException {
     if (!arcoreActive) {
@@ -995,43 +1035,36 @@ public class SharedCameraActivity extends AppCompatActivity
 
       // Get projection matrix.
       float[] projmtx = new float[16];
-      camera.getProjectionMatrix(projmtx, 0, 0.1f, 100.0f);
+      camera.getProjectionMatrix(projmtx, 0, 0.001f, 100.0f);
 
       // Get camera matrix and draw.
       float[] viewmtx = new float[16];
       camera.getViewMatrix(viewmtx, 0);
 
 
-    if (cnt % 10 == 0) {
+    //if (cnt % 10 == 0) {
 
       @SuppressLint("ResourceType") CustomView view = findViewById(R.id.customView);
-      //view.get
 
-      //double fov = 2.0*Math.atan( 1.0/projmtx[5] ) * 180.0 / Math.PI;
-      //double aspect = projmtx[5] / projmtx[0];
-      //Log.e(TAG, "fov : " + fov);
-      //Log.e(TAG, "aspect : " + aspect);
       float[] viewmtx2 = new float[16];
       camera.getDisplayOrientedPose().toMatrix(viewmtx2, 0);
-      Log.e(TAG, "position1 : " + camera.getPose().getTranslation()[0] + "," + camera.getPose().getTranslation()[1] + "," + camera.getPose().getTranslation()[2]);
-      // Log.e(TAG, "position 2: " + viewmtx2[12] + "," + viewmtx2[13]+ "," + viewmtx2[14]);
-      Map data = new HashMap();
-      data.put("PM", projmtx);
-      data.put("VM", viewmtx2);
-      Thread mThread = new Thread() {
-        @Override
-        public void run() {
-          try {
 
-            mqttClient.publish("/b804f78d-491d-4d87-a879-88ca052e9fcb", new MqttMessage(new ObjectMapper().writeValueAsString(data).getBytes()));
-          } catch (MqttException | JsonProcessingException e) {
-            //e.printStackTrace();
-          }
-        }
-      };
 
-      mThread.start();
+      float[] coords = view.getCoordinates();
+    if (coords != null) {
+      Vector3 origin = new Vector3(0, 0, 0);
+      origin.setFromMatrixPosition(viewmtx2);
+
+      Vector3 direction = new Vector3(0, 0, -1);
+
+      direction.set(coords[0], coords[1], 0.5f).unproject(projmtx, viewmtx2).sub(origin).normalize();
+
+      rays2.add(new Ray(new Vector3(origin.x, origin.y, origin.z), new Vector3(direction.x, direction.y, direction.z)));
+
+      rays.getPointList().add(origin);
+      rays.getPointList().add(direction.multiplyScalar(100.0f).add(origin));
     }
+
 
     // Compute lighting from average intensity of the image.
     // The first three components are color scaling factors.
@@ -1045,6 +1078,73 @@ public class SharedCameraActivity extends AppCompatActivity
       pointCloudRenderer.update(pointCloud);
       pointCloudRenderer.draw(viewmtx, projmtx);
     }
+
+    xAxislineRenderer.draw(viewmtx, projmtx);
+
+
+    yAxislineRenderer.draw(viewmtx, projmtx);
+
+
+    zAxislineRenderer.draw(viewmtx, projmtx);
+
+
+    //rayLineRenderer.update(rays);
+    //rayLineRenderer.draw(viewmtx, projmtx);
+  double min = Double.MAX_VALUE;
+  removeIndex = null;
+  if (rays2.size() > 0) {
+    Vector3 v = new Vector3(0,0,0);
+      int cnt2 = 0;
+      for (int i = 0; i < rays2.size(); i++) {
+        for (int j = i + 1; j < rays2.size(); j++) {
+          Ray ra1 = rays2.get(i);
+          Ray ra2 = rays2.get(j);
+          if (i < 40) {
+            double len = new Vector3(ra1.direction.x, ra1.direction.y, ra1.direction.z).sub(ra2.direction).length();
+            if (len < min) {
+              min = len;
+              removeIndex = i;
+            }
+          }
+          try {
+
+            Vector3[] ps = ra1.getSkewPoints(ra2);
+
+            ps[0].add(ps[1]).divideScalar(2.0f);
+            v.add(ps[0]);
+            cnt2++;
+          } catch (Exception e) {
+
+          }
+        }
+
+
+
+      }
+        v.divideScalar(cnt2);
+        //Log.e(TAG, "position : " + v.x + "," + v.y+ "," + v.z);
+
+        float scaleFactor = 0.3f;
+        float[] anchorMatrix2 = new float[]{1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1};
+        anchorMatrix2[12] = v.x;
+        anchorMatrix2[13] = v.y - 0.025f;
+        anchorMatrix2[14] = v.z;
+        // Update and draw the model and its shadow.
+        virtualObject.updateModelMatrix(anchorMatrix2, scaleFactor);
+        virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, new float[]{66.0f, 133.0f, 244.0f, 255.0f});
+
+      }
+  if (removeIndex != null && rays2.size() > 50) {
+    Log.e(TAG, "removeIndex : " + removeIndex + ", " + rays2.size());
+    rays2.remove(rays2.get(removeIndex));
+
+    rays.getPointList().remove(rays.getPointList().get(removeIndex * 2 + 1));
+    rays.getPointList().remove(rays.getPointList().get(removeIndex * 2));
+
+  }
 
     // If we detected any plane and snackbar is visible, then hide the snackbar.
     if (messageSnackbarHelper.isShowing()) {
@@ -1077,6 +1177,9 @@ public class SharedCameraActivity extends AppCompatActivity
       virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
     }
   }
+
+
+
 
   // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
   private void handleTap(Frame frame, Camera camera) {

@@ -36,6 +36,12 @@ public class CustomView extends View {
     private  float postScaleWidthOffset;
     private  float postScaleHeightOffset;
     private  float scaleFactor;
+
+    private float[] coordinates = null;
+
+    public float[] getCoordinates() {
+        return this.coordinates;
+    }
     /**
      * 뷰가 화면에 디스플레이 될때 자동으로 호출
      * @param canvas
@@ -71,61 +77,68 @@ public class CustomView extends View {
         paint2.setStyle(Paint.Style.FILL);
         paint2.setTextSize(TEXT_SIZE);
 
-
+        coordinates = null;
         for (DetectedObject o : this.detectedObjects) {
 
-            float textWidth = paint.measureText("Tracking ID: " + o.getTrackingId());
-            float lineHeight = TEXT_SIZE + STROKE_WIDTH;
-            float yLabelOffset = -lineHeight;
+            if (o.getLabels().size() > 0 && "Mouse".equals(  o.getLabels().get(0).getText()) ) {
+
+                float textWidth = paint.measureText("Tracking ID: " + o.getTrackingId());
+                float lineHeight = TEXT_SIZE + STROKE_WIDTH;
+                float yLabelOffset = -lineHeight;
 
 
-
-            RectF rect = new RectF(o.getBoundingBox());
-            // If the image is flipped, the left will be translated to right, and the right to left.
-            float x0 = translateX(rect.left);
-            float x1 = translateX(rect.right);
-            rect.left = Math.min(x0, x1);
-            rect.right = Math.max(x0, x1);
-            rect.top = translateY(rect.top);
-            rect.bottom = translateY(rect.bottom);
-
-
-            Log.d("", "rect: " + rect);
+                RectF rect = new RectF(o.getBoundingBox());
+                // If the image is flipped, the left will be translated to right, and the right to left.
+                float x0 = translateX(rect.left);
+                float x1 = translateX(rect.right);
+                rect.left = Math.min(x0, x1);
+                rect.right = Math.max(x0, x1);
+                rect.top = translateY(rect.top);
+                rect.bottom = translateY(rect.bottom);
 
 
 
 
-           //
-            // Log.d(TAG,  "--------------------------------" + image.getWidth() + ", " + image.getHeight());
-            //float width =  rect.bottom - rect.top;
-            canvas.drawRect(  rect.left , rect.top, rect.right, rect.bottom, paint);
+               double coordx = ((rect.left + rect.right) / 2.0) / getWidth() * 2 - 1;
+               double coordy = ((rect.top + rect.bottom) / 2.0) / getHeight() * -2 + 1;
+
+                coordinates = new float[]{(float) coordx, (float)coordy};
+                Log.d("", "coord: " + coordx + " , " + coordy);
 
 
-            // Draws other object info.
-            canvas.drawRect(
-                    rect.left - STROKE_WIDTH,
-                    rect.top + yLabelOffset,
-                    rect.left + textWidth + (2 * STROKE_WIDTH),
-                    rect.top,
-                    paint);
-            yLabelOffset += TEXT_SIZE;
-            canvas.drawText(
-                    "Tracking ID: " + o.getTrackingId(),
-                    rect.left,
-                    rect.top + yLabelOffset,
-                    paint2);
-            yLabelOffset += lineHeight;
 
-            for (DetectedObject.Label label : o.getLabels()) {
-                canvas.drawText(label.getText(), rect.left, rect.top + yLabelOffset, paint2);
-                yLabelOffset += lineHeight;
+                //
+                // Log.d(TAG,  "--------------------------------" + image.getWidth() + ", " + image.getHeight());
+                //float width =  rect.bottom - rect.top;
+                canvas.drawRect(rect.left, rect.top, rect.right, rect.bottom, paint);
+
+
+                // Draws other object info.
+                canvas.drawRect(
+                        rect.left - STROKE_WIDTH,
+                        rect.top + yLabelOffset,
+                        rect.left + textWidth + (2 * STROKE_WIDTH),
+                        rect.top,
+                        paint);
+                yLabelOffset += TEXT_SIZE;
                 canvas.drawText(
-                        String.format(Locale.US, LABEL_FORMAT, label.getConfidence() * 100, label.getIndex()),
+                        "Tracking ID: " + o.getTrackingId(),
                         rect.left,
                         rect.top + yLabelOffset,
                         paint2);
-
                 yLabelOffset += lineHeight;
+
+                for (DetectedObject.Label label : o.getLabels()) {
+                    canvas.drawText(label.getText(), rect.left, rect.top + yLabelOffset, paint2);
+                    yLabelOffset += lineHeight;
+                    canvas.drawText(
+                            String.format(Locale.US, LABEL_FORMAT, label.getConfidence() * 100, label.getIndex()),
+                            rect.left,
+                            rect.top + yLabelOffset,
+                            paint2);
+
+                    yLabelOffset += lineHeight;
+                }
             }
         }
 
@@ -175,4 +188,5 @@ public class CustomView extends View {
         //}
 
     }
+
 }
