@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.ar.core.examples.java.sharedcamera;
+package com.smartfarm.ai;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -45,11 +45,10 @@ import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
@@ -66,21 +65,6 @@ import com.google.ar.core.Session;
 import com.google.ar.core.SharedCamera;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
-import com.google.ar.core.examples.java.common.helpers.CameraPermissionHelper;
-import com.google.ar.core.examples.java.common.helpers.DisplayRotationHelper;
-import com.google.ar.core.examples.java.common.helpers.FullScreenHelper;
-import com.google.ar.core.examples.java.common.helpers.SnackbarHelper;
-import com.google.ar.core.examples.java.common.helpers.TapHelper;
-import com.google.ar.core.examples.java.common.helpers.TrackingStateHelper;
-import com.google.ar.core.examples.java.common.rendering.BackgroundRenderer;
-import com.google.ar.core.examples.java.common.rendering.LineRenderer;
-import com.google.ar.core.examples.java.common.rendering.ObjectRenderer;
-import com.google.ar.core.examples.java.common.rendering.ObjectRenderer.BlendMode;
-import com.google.ar.core.examples.java.common.rendering.PlaneRenderer;
-import com.google.ar.core.examples.java.common.rendering.PointCloudRenderer;
-import com.google.ar.core.examples.java.common.rendering.geometry.LineString;
-import com.google.ar.core.examples.java.common.rendering.geometry.Ray;
-import com.google.ar.core.examples.java.common.rendering.geometry.Vector3;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.UnavailableException;
 import com.google.mlkit.common.model.LocalModel;
@@ -89,21 +73,31 @@ import com.google.mlkit.vision.objects.DetectedObject;
 import com.google.mlkit.vision.objects.ObjectDetection;
 import com.google.mlkit.vision.objects.ObjectDetector;
 import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions;
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
+import com.smartfarm.common.helpers.CameraPermissionHelper;
+import com.smartfarm.common.helpers.DisplayRotationHelper;
+import com.smartfarm.common.helpers.FullScreenHelper;
+import com.smartfarm.common.helpers.SnackbarHelper;
+import com.smartfarm.common.helpers.TapHelper;
+import com.smartfarm.common.helpers.TrackingStateHelper;
+import com.smartfarm.common.rendering.BackgroundRenderer;
+import com.smartfarm.common.rendering.LineRenderer;
+import com.smartfarm.common.rendering.ObjectRenderer;
+import com.smartfarm.common.rendering.PlaneRenderer;
+import com.smartfarm.common.rendering.PointCloudRenderer;
+import com.smartfarm.common.rendering.geometry.LineString;
+import com.smartfarm.common.rendering.geometry.Ray;
+import com.smartfarm.common.rendering.geometry.Vector3;
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.io.IOException;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -889,7 +883,7 @@ public class SharedCameraActivity extends AppCompatActivity
 
       virtualObjectShadow.createOnGlThread(
           this, "models/andy_shadow.obj", "models/andy_shadow.png");
-      virtualObjectShadow.setBlendMode(BlendMode.Shadow);
+      virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
       virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
 
       LineString lsx = new LineString();

@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.ar.core.examples.java.common.rendering;
+package com.smartfarm.common.rendering;
 
 import android.content.Context;
 import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.util.Log;
 
-import com.google.ar.core.PointCloud;
-import com.google.ar.core.examples.java.common.rendering.geometry.LineString;
+import com.smartfarm.common.rendering.geometry.LineString;
 
 import java.io.IOException;
 

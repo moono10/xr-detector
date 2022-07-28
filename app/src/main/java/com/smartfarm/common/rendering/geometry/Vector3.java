@@ -1,8 +1,4 @@
-package com.google.ar.core.examples.java.common.rendering.geometry;
-
-import com.google.ar.core.Camera;
-
-import java.net.URI;
+package com.smartfarm.common.rendering.geometry;
 
 public class Vector3 {
 

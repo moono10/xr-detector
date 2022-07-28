@@ -18,7 +18,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.google.ar.core.examples.java.sharedcamera.SharedCameraActivity">
+    tools:context="com.smartfarm.ai.SharedCameraActivity">
 
     <android.opengl.GLSurfaceView
         android:id="@+id/glsurfaceview"
@@ -58,7 +58,7 @@
         android:switchPadding="8dp"
         android:text="AR" />
 
-    <com.google.ar.core.examples.java.sharedcamera.CustomView
+    <com.smartfarm.ai.CustomView
         android:id="@+id/customView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>

@@ -1,4 +1,4 @@
-package com.google.ar.core.examples.java.sharedcamera;
+package com.smartfarm.ai;
 
 import android.content.Context;
 import android.graphics.Canvas;

@@ -1,4 +1,4 @@
-package com.google.ar.core.examples.java.common.rendering.geometry;
+package com.smartfarm.common.rendering.geometry;
 
 public class Ray {
     public Vector3 origin;

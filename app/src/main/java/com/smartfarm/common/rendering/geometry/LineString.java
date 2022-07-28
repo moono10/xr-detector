@@ -1,7 +1,6 @@
-package com.google.ar.core.examples.java.common.rendering.geometry;
+package com.smartfarm.common.rendering.geometry;
 
 import java.nio.FloatBuffer;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
