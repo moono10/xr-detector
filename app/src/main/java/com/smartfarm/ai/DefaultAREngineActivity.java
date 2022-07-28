@@ -83,7 +83,6 @@ import com.smartfarm.common.rendering.BackgroundRenderer;
 import com.smartfarm.common.rendering.LineRenderer;
 import com.smartfarm.common.rendering.ObjectRenderer;
 import com.smartfarm.common.rendering.PlaneRenderer;
-import com.smartfarm.common.rendering.PointCloudRenderer;
 import com.smartfarm.common.rendering.geometry.LineString;
 import com.smartfarm.common.rendering.geometry.Ray;
 import com.smartfarm.common.rendering.geometry.Vector3;
@@ -170,7 +169,7 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
   private final ObjectRenderer virtualObject = new ObjectRenderer();
   private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
   private final PlaneRenderer planeRenderer = new PlaneRenderer();
-  private final PointCloudRenderer pointCloudRenderer = new PointCloudRenderer();
+
 
 
 
@@ -780,14 +779,13 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
       // Create the camera preview image texture. Used in non-AR and AR mode.
       backgroundRenderer.createOnGlThread(this);
       planeRenderer.createOnGlThread(this, "models/trigrid.png");
-      pointCloudRenderer.createOnGlThread(this);
+
 
 
       virtualObject.createOnGlThread(this, "models/andy.obj", "models/andy.png");
       virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
-      virtualObjectShadow.createOnGlThread(
-          this, "models/andy_shadow.obj", "models/andy_shadow.png");
+      virtualObjectShadow.createOnGlThread(this, "models/andy_shadow.obj", "models/andy_shadow.png");
       virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
       virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
 
@@ -890,6 +888,7 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
 
 
       float[] coords = view.getCoordinates();
+
     if (coords != null) {
       Vector3 origin = new Vector3(0, 0, 0);
       origin.setFromMatrixPosition(viewmtx2);
@@ -911,15 +910,10 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
     final float[] colorCorrectionRgba = new float[4];
     frame.getLightEstimate().getColorCorrection(colorCorrectionRgba, 0);
 
-    // Visualize tracked points.
-    // Use try-with-resources to automatically release the point cloud.
-    try (PointCloud pointCloud = frame.acquirePointCloud()) {
-      pointCloudRenderer.update(pointCloud);
-      pointCloudRenderer.draw(viewmtx, projmtx);
-    }
+
 
     for (Scene scene : scenes) {
-      scene.draw(camera);
+      scene.draw(camera, frame);
     }
 
 

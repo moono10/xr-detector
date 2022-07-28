@@ -2,13 +2,10 @@ package com.smartfarm.core.components;
 
 import android.content.Context;
 
+import com.google.ar.core.Frame;
 import com.smartfarm.common.rendering.LineRenderer;
 import com.smartfarm.common.rendering.geometry.LineString;
-import com.smartfarm.common.rendering.geometry.Vector3;
-import com.smartfarm.core.Color4;
 import com.smartfarm.core.Component;
-
-import java.io.IOException;
 
 public class LineRendererComponent extends Component {
 
@@ -24,7 +21,7 @@ public class LineRendererComponent extends Component {
     }
 
     @Override
-    public void draw(float[] viewmtx, float[] projmtx) {
+    public void draw(float[] viewmtx, float[] projmtx, Frame frame) {
         xAxislineRenderer.draw(viewmtx, projmtx);
     }
 }

@@ -1,6 +1,7 @@
 package com.smartfarm.core;
 
 import com.google.ar.core.Camera;
+import com.google.ar.core.Frame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +22,13 @@ public class Scene {
         this.nodes = nodes;
     }
 
-    public void draw(Camera camera) {
+    public void draw(Camera camera, Frame frame) {
         camera.getProjectionMatrix(projmtx, 0, 0.001f, 100.0f);
         camera.getViewMatrix(viewmtx, 0);
 
         for (Node node : nodes) {
             for (Component component : node.getComponents()) {
-                component.draw(viewmtx, projmtx);
+                component.draw(viewmtx, projmtx, frame);
             }
         }
 
