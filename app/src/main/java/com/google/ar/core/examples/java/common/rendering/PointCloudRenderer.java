@@ -142,9 +142,8 @@ public class PointCloudRenderer {
     GLES20.glVertexAttribPointer(positionAttribute, 4, GLES20.GL_FLOAT, false, BYTES_PER_POINT, 0);
     GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);
     GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjection, 0);
-    GLES20.glUniform1f(pointSizeUniform, 115.0f);
-    GLES20.glLineWidth(120f);
-    GLES20.glDrawArrays(GLES20.GL_LINES, 0, numPoints);
+    GLES20.glUniform1f(pointSizeUniform, 5.0f);
+    GLES20.glDrawArrays(GLES20.GL_POINTS, 0, numPoints);
     GLES20.glDisableVertexAttribArray(positionAttribute);
     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 

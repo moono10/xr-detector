@@ -42,44 +42,33 @@ public class LineRenderer {
 
   private int programName;
   private int positionAttribute;
-  private int modelViewProjectionUniform;
-  private int colorUniform;
-  private int pointSizeUniform;
+  private int modelViewProjectionUniform;         // MVP값을 저장할 주소값
+  private int colorUniform;                       // 색상값을 저장할 주소값
 
   private int numPoints = 0;
 
-  // Keep track of the last point cloud rendered to avoid updating the VBO if point cloud
-  // was not changed.  Do this using the timestamp since we can't compare PointCloud objects.
-  private long lastTimestamp = 0;
 
   public LineRenderer() {}
 
-  /**
-   * Allocates and initializes OpenGL resources needed by the plane renderer. Must be called on the
-   * OpenGL thread, typically in {@link GLSurfaceView.Renderer#onSurfaceCreated(GL10, EGLConfig)}.
-   *
-   * @param context Needed to access shader source.
-   */
   public void createOnGlThread(Context context) throws IOException {
     ShaderUtil.checkGLError(TAG, "before create");
 
     int[] buffers = new int[1];
-    GLES20.glGenBuffers(1, buffers, 0);
+    GLES20.glGenBuffers(1, buffers, 0);             //버퍼 1개 생성
     vbo = buffers[0];
-    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-
-    vboSize = INITIAL_BUFFER_POINTS * BYTES_PER_POINT;
-    GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vboSize, null, GLES20.GL_DYNAMIC_DRAW);
-    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+    
+    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);     //VBO 버퍼 사용시작.
+    vboSize = INITIAL_BUFFER_POINTS * BYTES_PER_POINT;    //32byte * 1000
+    GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vboSize, null, GLES20.GL_DYNAMIC_DRAW);     //VBO 버퍼 NULL로 채움
+    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);   //VBO 버퍼 사용종료.
 
     ShaderUtil.checkGLError(TAG, "buffer alloc");
 
-    int vertexShader =
-        ShaderUtil.loadGLShader(TAG, context, GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_NAME);
-    int passthroughShader =
-        ShaderUtil.loadGLShader(TAG, context, GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_NAME);
+    int vertexShader = ShaderUtil.loadGLShader(TAG, context, GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_NAME);
+    int passthroughShader = ShaderUtil.loadGLShader(TAG, context, GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_NAME);
 
     programName = GLES20.glCreateProgram();
+
     GLES20.glAttachShader(programName, vertexShader);
     GLES20.glAttachShader(programName, passthroughShader);
     GLES20.glLinkProgram(programName);
@@ -88,10 +77,9 @@ public class LineRenderer {
     ShaderUtil.checkGLError(TAG, "program");
 
     positionAttribute = GLES20.glGetAttribLocation(programName, "a_Position");
+
     colorUniform = GLES20.glGetUniformLocation(programName, "u_Color");
     modelViewProjectionUniform = GLES20.glGetUniformLocation(programName, "u_ModelViewProjection");
-    pointSizeUniform = GLES20.glGetUniformLocation(programName, "u_PointSize");
-
     ShaderUtil.checkGLError(TAG, "program  params");
   }
 
@@ -100,55 +88,44 @@ public class LineRenderer {
    * cloud will be ignored.
    */
   public void update(PointCloud cloud) {
-    if (cloud.getTimestamp() == lastTimestamp) {
-      // Redundant call.
-      return;
-    }
+
     ShaderUtil.checkGLError(TAG, "before update");
 
-    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-    lastTimestamp = cloud.getTimestamp();
+    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);     //VBO 버퍼 사용시작.
 
-    // If the VBO is not large enough to fit the new point cloud, resize it.
     numPoints = cloud.getPoints().remaining() / FLOATS_PER_POINT;
     if (numPoints * BYTES_PER_POINT > vboSize) {
       while (numPoints * BYTES_PER_POINT > vboSize) {
         vboSize *= 2;
       }
-      GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vboSize, null, GLES20.GL_DYNAMIC_DRAW);
+      GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vboSize, null, GLES20.GL_DYNAMIC_DRAW);         //VBO 버퍼 NULL로 채움
     }
-    GLES20.glBufferSubData(
-        GLES20.GL_ARRAY_BUFFER, 0, numPoints * BYTES_PER_POINT, cloud.getPoints());
-    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, numPoints * BYTES_PER_POINT, cloud.getPoints());
+
+    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);   //VBO 버퍼 사용종료.
 
     ShaderUtil.checkGLError(TAG, "after update");
   }
-
-  /**
-   * Renders the point cloud. ARCore point cloud is given in world space.
-   *
-   * @param cameraView the camera view matrix for this frame, typically from {@link
-   *     com.google.ar.core.Camera#getViewMatrix(float[], int)}.
-   * @param cameraPerspective the camera projection matrix for this frame, typically from {@link
-   *     com.google.ar.core.Camera#getProjectionMatrix(float[], int, float, float)}.
-   */
+  
   public void draw(float[] cameraView, float[] cameraPerspective) {
     float[] modelViewProjection = new float[16];
     Matrix.multiplyMM(modelViewProjection, 0, cameraPerspective, 0, cameraView, 0);
 
     ShaderUtil.checkGLError(TAG, "Before draw");
 
-    GLES20.glUseProgram(programName);
-    GLES20.glEnableVertexAttribArray(positionAttribute);
-    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
+    GLES20.glUseProgram(programName);                                                                         //라인렌더러 사용시작
+    GLES20.glEnableVertexAttribArray(positionAttribute);                                                      //POSITION 속성 활성 시작
+
+    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);                                                         //VBO 버퍼 사용시작.
     GLES20.glVertexAttribPointer(positionAttribute, 4, GLES20.GL_FLOAT, false, BYTES_PER_POINT, 0);
-    GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);
-    GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjection, 0);
-    GLES20.glUniform1f(pointSizeUniform, 115.0f);
+
+    GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);   //컬러 변수 넘김
+    GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjection, 0);        //MVP 변수 넘김
+    
     GLES20.glLineWidth(120f);
     GLES20.glDrawArrays(GLES20.GL_LINES, 0, numPoints);
-    GLES20.glDisableVertexAttribArray(positionAttribute);
-    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+    GLES20.glDisableVertexAttribArray(positionAttribute);                                                    //POSITION 속성 활성 종료
+    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);                                                       //VBO 버퍼 사용종료.
 
     ShaderUtil.checkGLError(TAG, "Draw");
   }
