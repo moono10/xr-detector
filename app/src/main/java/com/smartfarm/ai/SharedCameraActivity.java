@@ -185,7 +185,7 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
     @Override
     public void onImageAvailable(ImageReader imageReader) {
         super.onImageAvailable(imageReader);
-        odc.onImageAvailable(imageReader);
+        odc.onImageAvailable(imageReader, displayRotationHelper, cameraId);
 
         cpuImagesProcessed++;
 

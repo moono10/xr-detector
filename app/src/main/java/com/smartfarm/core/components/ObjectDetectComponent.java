@@ -21,6 +21,7 @@ import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions;
 import com.smartfarm.ai.CustomView;
 import com.smartfarm.ai.R;
 import com.smartfarm.ai.SharedCameraActivity;
+import com.smartfarm.common.helpers.DisplayRotationHelper;
 import com.smartfarm.common.rendering.ObjectRenderer;
 import com.smartfarm.common.rendering.geometry.LineString;
 import com.smartfarm.common.rendering.geometry.Ray;
@@ -91,14 +92,14 @@ public class ObjectDetectComponent extends Component {
         Set<Integer> keyset = odMap.getMap().keySet();
         for (Integer key : keyset) {
             if (odMap.getMap().get(key).getAvgDirectionLength() > 0.1) {
-                // Update and draw the model and its shadow.
+
                 virtualObject.updateModelMatrix(odMap.getMap().get(key).getAnchorMatrix(), scaleFactor);
                 virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, new float[]{66.0f, 133.0f, 244.0f, 255.0f});
             }
         }
     }
 
-    public void onImageAvailable(ImageReader imageReader) {
+    public void onImageAvailable(ImageReader imageReader, DisplayRotationHelper displayRotationHelper, String cameraId) {
 
         Image image = imageReader.acquireLatestImage();
         if (image == null) {
@@ -109,18 +110,21 @@ public class ObjectDetectComponent extends Component {
             image.close();
             return;
         }
-
-        InputImage image2 = InputImage.fromMediaImage(image, view.getWidth() > view.getHeight() ? 0 : 90);
+        int rotation = displayRotationHelper.getCameraSensorToDisplayRotation(cameraId);
+        InputImage image2 = InputImage.fromMediaImage(image, rotation);
         float[] projmtxcopy = new float[16];
         System.arraycopy(this.projmtx, 0, projmtxcopy, 0, 16);
 
         float[] viewmtxcopy = new float[16];
         System.arraycopy(this.viewmtx, 0, viewmtxcopy, 0, 16);
 
-        int imageWidth = image.getHeight();//TODO
-        int imageHeight = image.getWidth();
+        int imageWidth =  rotation != 90 ? image.getWidth() : image.getHeight();
+        int imageHeight = rotation != 90 ? image.getHeight() : image.getWidth();
+
         int viewWidth = view.getWidth();
         int viewHeight = view.getHeight();
+
+
 
         objectDetector.process(image2).addOnSuccessListener(new OnSuccessListener<List<DetectedObject>>() {
             @Override

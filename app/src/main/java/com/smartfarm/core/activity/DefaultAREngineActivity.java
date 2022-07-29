@@ -79,7 +79,7 @@ public abstract class DefaultAREngineActivity extends DeafultEngineActivity impl
   private SharedCamera sharedCamera;
 
   // Camera ID for the camera used by ARCore.
-  private String cameraId;
+  protected String cameraId;
 
   // Ensure GL surface draws only occur when new frames are available.
   protected final AtomicBoolean shouldUpdateSurfaceTexture = new AtomicBoolean(false);
