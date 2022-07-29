@@ -25,11 +25,13 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import com.smartfarm.common.rendering.BackgroundRenderer;
 import com.smartfarm.common.rendering.geometry.LineString;
 import com.smartfarm.common.rendering.geometry.Vector3;
 import com.smartfarm.core.Color4;
 import com.smartfarm.core.Node;
 import com.smartfarm.core.Scene;
+import com.smartfarm.core.components.ARBackgroundComponent;
 import com.smartfarm.core.components.ARSurfaceDetectComponent;
 import com.smartfarm.core.components.ARTrackedPointComponent;
 import com.smartfarm.core.components.ARHitTestComponent;
@@ -89,9 +91,6 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
         xAxis.addComponent(new LineRendererComponent(this, lsz));
         scene.getNodes().add(zAxis);
 
-        Node arTrackedPointCloud = new Node();
-        arTrackedPointCloud.addComponent(new ARTrackedPointComponent(this));
-        scene.getNodes().add(arTrackedPointCloud);
 
         Node objectDetector = new Node();
         odc = new ObjectDetectComponent(this);
@@ -100,17 +99,21 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
 
         scene.getNodes().add(hitTest);
 
-        Node arSurfaceDetector = new Node();
-        arSurfaceDetector.addComponent(new ARSurfaceDetectComponent(this));
-        scene.getNodes().add(arSurfaceDetector);
+        Node ar = new Node();
 
-
-
+        arBackgroundComponent = new ARBackgroundComponent(this);
+        ar.addComponent(arBackgroundComponent);
+        ar.addComponent(new ARSurfaceDetectComponent(this));
+        ar.addComponent(new ARTrackedPointComponent(this));
+        scene.getNodes().add(ar);
        // private final LineRenderer rayLineRenderer = new LineRenderer(255.0f/ 255.0f, 255.0f/ 255.0f, 255.0f/ 255.0f);
 
-
-
         return scene;
+    }
+    ARBackgroundComponent arBackgroundComponent;
+    @Override
+    public BackgroundRenderer getBackgroundRenderer() {
+        return arBackgroundComponent.backgroundRenderer;
     }
 
     Node hitTest;
@@ -145,12 +148,13 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
                     updateSnackbarMessage();
                 });*/
 
-        messageSnackbarHelper.setMaxLines(4);
-        updateSnackbarMessage();
+
 
         imageTextLinearLayout = findViewById(R.id.image_text_layout);
         statusTextView = findViewById(R.id.text_view);
     }
+
+
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {

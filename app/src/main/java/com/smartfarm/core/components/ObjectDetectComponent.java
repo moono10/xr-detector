@@ -66,7 +66,7 @@ public class ObjectDetectComponent extends Component {
 
         objectDetector = ObjectDetection.getClient(customObjectDetectorOptions);
 
-       CustomView view = context.findViewById(R.id.customView);
+        view = context.findViewById(R.id.customView);
     }
 
     @Override

@@ -79,9 +79,6 @@ import com.smartfarm.common.helpers.FullScreenHelper;
 import com.smartfarm.common.helpers.SnackbarHelper;
 import com.smartfarm.common.helpers.TrackingStateHelper;
 import com.smartfarm.common.rendering.BackgroundRenderer;
-import com.smartfarm.common.rendering.geometry.LineString;
-import com.smartfarm.common.rendering.geometry.Ray;
-import com.smartfarm.common.rendering.geometry.Vector3;
 import com.smartfarm.core.ARUtil;
 import com.smartfarm.core.Scene;
 
@@ -149,20 +146,9 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
   // Image reader that continuously processes CPU images.
   private ImageReader cpuImageReader;
 
-  // Various helper classes, see hello_ar_java sample to learn more.
-  protected final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
+
   private DisplayRotationHelper displayRotationHelper;
   private final TrackingStateHelper trackingStateHelper = new TrackingStateHelper(this);
-
-  // Renderers, see hello_ar_java sample to learn more.
-  private final BackgroundRenderer backgroundRenderer = new BackgroundRenderer();
-
-
-
-
-
-
-
 
   // Prevent any changes to camera capture session after CameraManager.openCamera() is called, but
   // before camera device becomes active.
@@ -170,10 +156,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
 
   // A check mechanism to ensure that the camera closed properly so that the app can safely exit.
   private final ConditionVariable safeToExitApp = new ConditionVariable();
-
-
-
-
 
   // Repeating camera capture session capture callback.
   private final CameraCaptureSession.CaptureCallback cameraCaptureCallback =
@@ -216,7 +198,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-
     // GL surface view that renders camera preview image.
     canvas = findViewById(R.id.glsurfaceview);
     canvas.setPreserveEGLContextOnPause(true);
@@ -225,11 +206,8 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
     canvas.setRenderer(this);
     canvas.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
-
-
     // Helpers, see hello_ar_java sample to learn more.
     displayRotationHelper = new DisplayRotationHelper(this);
-
   }
 
   @Override
@@ -297,11 +275,10 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
       try {
         // To avoid flicker when resuming ARCore mode inform the renderer to not suppress rendering
         // of the frames with zero timestamp.
-        backgroundRenderer.suppressTimestampZeroRendering(false);
+        getBackgroundRenderer().suppressTimestampZeroRendering(false);
         // Resume ARCore.
         sharedSession.resume();
         arcoreActive = true;
-        updateSnackbarMessage();
 
         // Set capture session callback while in AR mode.
         sharedCamera.setCaptureCallback(cameraCaptureCallback, backgroundHandler);
@@ -318,17 +295,11 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
       sharedSession.pause();
 
       arcoreActive = false;
-      updateSnackbarMessage();
     }
   }
+  public abstract BackgroundRenderer getBackgroundRenderer();
 
-  protected void updateSnackbarMessage() {
-    messageSnackbarHelper.showMessage(
-        this,
-        arcoreActive
-            ? "ARCore is active.\nSearch for plane, then tap to place a 3D model."
-            : "ARCore is paused.\nCamera effects enabled.");
-  }
+
 
   // Called when starting non-AR mode or switching to non-AR mode.
   // Also called when app starts in AR mode, or resumes in AR mode.
@@ -345,12 +316,11 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
 
   private void createCameraPreviewSession() {
     try {
-      sharedSession.setCameraTextureName(backgroundRenderer.getTextureId());
+      sharedSession.setCameraTextureName(getBackgroundRenderer().getTextureId());
       //sharedCamera.getSurfaceTexture().setOnFrameAvailableListener(this);
 
       // Create an ARCore compatible capture request using `TEMPLATE_RECORD`.
-      previewCaptureRequestBuilder =
-          cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+      previewCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
 
       // Build surfaces list, starting with ARCore provided surfaces.
       List<Surface> surfaceList = sharedCamera.getArCoreSurfaces();
@@ -381,7 +351,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
               captureSession = session;
 
               setRepeatingCaptureRequest();
-
             }
 
             @Override
@@ -405,7 +374,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
                 captureSessionChangesPossible = true;
                 DefaultAREngineActivity.this.notify();
               }
-              updateSnackbarMessage();
             }
 
             @Override
@@ -476,8 +444,7 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
         sharedSession = new Session(this, EnumSet.of(Session.Feature.SHARED_CAMERA));
       } catch (Exception e) {
         errorCreatingSession = true;
-        messageSnackbarHelper.showError(
-            this, "Failed to create ARCore session that supports camera sharing");
+
         Log.e(TAG, "Failed to create ARCore session that supports camera sharing", e);
         return;
       }
@@ -635,11 +602,7 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
   public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
     super.onRequestPermissionsResult(requestCode, permissions, results);
     if (!CameraPermissionHelper.hasCameraPermission(this)) {
-      Toast.makeText(
-              getApplicationContext(),
-              "Camera permission is needed to run this application",
-              Toast.LENGTH_LONG)
-          .show();
+      Toast.makeText(getApplicationContext(), "Camera permission is needed to run this application", Toast.LENGTH_LONG).show();
       if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(this)) {
         // Permission denied with checking "Do not ask again".
         CameraPermissionHelper.launchPermissionSettings(this);
@@ -667,16 +630,7 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
     // Set GL clear color to black.
     GLES20.glClearColor(0f, 0f, 0f, 1.0f);
     scenes.add(createScene());
-
-    // Prepare the rendering objects. This involves reading shaders, so may throw an IOException.
-    try {
-      // Create the camera preview image texture. Used in non-AR and AR mode.
-      backgroundRenderer.createOnGlThread(this);
-
-      openCamera();
-    } catch (IOException e) {
-      Log.e(TAG, "Failed to read an asset file", e);
-    }
+    openCamera();
   }
 
   // GL surface changed callback. Will be called on the GL thread.
@@ -685,7 +639,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
     GLES20.glViewport(0, 0, width, height);
     displayRotationHelper.onSurfaceChanged(width, height);
   }
-
   // GL draw callback. Will be called each frame on the GL thread.
   @Override
   public void onDrawFrame(GL10 gl) {
@@ -713,19 +666,14 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
       Frame frame = sharedSession.update();
       Camera camera = frame.getCamera();
 
-      // If frame is ready, render camera preview image to the GL surface.
-      backgroundRenderer.draw(frame);
-
+      for (Scene scene : scenes) {
+        scene.draw(camera, frame);
+      }
       // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
       trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
-
       // If not tracking, don't draw 3D objects.
       if (camera.getTrackingState() == TrackingState.PAUSED) {
         return;
-      }
-
-      for (Scene scene : scenes) {
-        scene.draw(camera, frame);
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
