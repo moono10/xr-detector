@@ -31,6 +31,7 @@ import com.smartfarm.common.rendering.geometry.Vector3;
 import com.smartfarm.core.Color4;
 import com.smartfarm.core.Node;
 import com.smartfarm.core.Scene;
+import com.smartfarm.core.activity.DefaultAREngineActivity;
 import com.smartfarm.core.components.ARBackgroundComponent;
 import com.smartfarm.core.components.ARSurfaceDetectComponent;
 import com.smartfarm.core.components.ARTrackedPointComponent;

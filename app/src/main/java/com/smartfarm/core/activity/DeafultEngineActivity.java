@@ -1,4 +1,4 @@
-package com.smartfarm.ai;
+package com.smartfarm.core.activity;
 
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.smartfarm.ai.R;
 import com.smartfarm.common.helpers.CameraPermissionHelper;
 import com.smartfarm.common.helpers.DisplayRotationHelper;
 import com.smartfarm.common.helpers.FullScreenHelper;

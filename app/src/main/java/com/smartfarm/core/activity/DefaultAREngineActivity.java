@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.smartfarm.ai;
+package com.smartfarm.core.activity;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
@@ -30,8 +30,6 @@ import android.media.ImageReader;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.ConditionVariable;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;

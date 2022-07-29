@@ -12,7 +12,6 @@ import com.google.ar.core.Plane;
 import com.google.ar.core.Point;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
-import com.smartfarm.ai.DefaultAREngineActivity;
 import com.smartfarm.ai.R;
 import com.smartfarm.common.helpers.TapHelper;
 import com.smartfarm.common.rendering.ObjectRenderer;

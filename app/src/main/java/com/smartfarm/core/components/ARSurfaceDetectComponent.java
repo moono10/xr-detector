@@ -1,12 +1,8 @@
 package com.smartfarm.core.components;
 
-import android.app.Activity;
-import android.util.Log;
-
 import com.google.ar.core.Frame;
 import com.google.ar.core.Plane;
-import com.google.ar.core.Session;
-import com.smartfarm.ai.DefaultAREngineActivity;
+import com.smartfarm.core.activity.DefaultAREngineActivity;
 import com.smartfarm.common.rendering.PlaneRenderer;
 import com.smartfarm.core.Component;
 
