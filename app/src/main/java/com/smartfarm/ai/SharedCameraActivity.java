@@ -68,6 +68,21 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
 
         Scene scene = new Scene();
 
+
+
+
+
+        Node ar = new Node();
+
+        arBackgroundComponent = new ARBackgroundComponent(this);
+        ar.addComponent(arBackgroundComponent);
+        ar.addComponent(new ARSurfaceDetectComponent(this));
+        ar.addComponent(new ARTrackedPointComponent(this));
+        scene.getNodes().add(ar);
+       // private final LineRenderer rayLineRenderer = new LineRenderer(255.0f/ 255.0f, 255.0f/ 255.0f, 255.0f/ 255.0f);
+
+
+
         LineString lsx = new LineString();
         lsx.getPointList().add(new Vector3(0,0,0));
         lsx.getPointList().add(new Vector3(1000, 0, 0));
@@ -93,21 +108,20 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
         scene.getNodes().add(zAxis);
 
 
+
+
+
+
+
+
+
+
         Node objectDetector = new Node();
         odc = new ObjectDetectComponent(this);
         objectDetector.addComponent(odc);
         scene.getNodes().add(objectDetector);
 
         scene.getNodes().add(hitTest);
-
-        Node ar = new Node();
-
-        arBackgroundComponent = new ARBackgroundComponent(this);
-        ar.addComponent(arBackgroundComponent);
-        ar.addComponent(new ARSurfaceDetectComponent(this));
-        ar.addComponent(new ARTrackedPointComponent(this));
-        scene.getNodes().add(ar);
-       // private final LineRenderer rayLineRenderer = new LineRenderer(255.0f/ 255.0f, 255.0f/ 255.0f, 255.0f/ 255.0f);
 
         return scene;
     }

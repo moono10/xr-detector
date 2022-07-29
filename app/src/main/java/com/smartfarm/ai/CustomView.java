@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.google.mlkit.vision.objects.DetectedObject;
+import com.smartfarm.core.components.objectDetect.ObjectDetectMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +19,7 @@ import java.util.Locale;
 public class CustomView extends View {
 
     private Paint paint;
-    private int imageWidth;
-    private int imageHeight;
-    private List<DetectedObject> detectedObjects = new ArrayList<DetectedObject>();
+    private ObjectDetectMap odMap;
 
     public CustomView(Context context) {
         super(context);
@@ -31,39 +30,18 @@ public class CustomView extends View {
     }
 
     private static final float STROKE_WIDTH = 4.0f;
-    private static final float TEXT_SIZE = 54.0f;
+    private static final float TEXT_SIZE = 32.0f;
     private static final String LABEL_FORMAT = "%.2f%% confidence (index: %d)";
-    private  float postScaleWidthOffset;
-    private  float postScaleHeightOffset;
-    private  float scaleFactor;
 
-    private float[] coordinates = null;
 
-    public float[] getCoordinates() {
-        return this.coordinates;
-    }
     /**
      * 뷰가 화면에 디스플레이 될때 자동으로 호출
+     *
      * @param canvas
      */
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
-        float viewAspectRatio = (float) getWidth() / getHeight();             //0.4655172413793103
-        float imageAspectRatio = (float) imageWidth / imageHeight;            // 0.75
-        postScaleWidthOffset = 0;
-        postScaleHeightOffset = 0;
-        if (viewAspectRatio > imageAspectRatio) {
-
-            scaleFactor = (float) getWidth() / imageWidth;
-            postScaleHeightOffset = ((float) getWidth() / imageAspectRatio - getHeight()) / 2;
-         } else {
-
-           scaleFactor = (float) getHeight() / imageHeight;
-           postScaleWidthOffset = ((float) getHeight() * imageAspectRatio - getWidth()) / 2;
-         }
-
 
 
         Paint paint = new Paint(); // 페인트 객체 생성
@@ -77,116 +55,51 @@ public class CustomView extends View {
         paint2.setStyle(Paint.Style.FILL);
         paint2.setTextSize(TEXT_SIZE);
 
-        coordinates = null;
-        for (DetectedObject o : this.detectedObjects) {
+    if (this.odMap == null) return;
+        for (Integer key : this.odMap.getMap().keySet()) {
 
-            if (o.getLabels().size() > 0 && "Mouse".equals(  o.getLabels().get(0).getText()) ) {
+            RectF rect = this.odMap.getMap().get(key).getScreenRect();
+            DetectedObject o = this.odMap.getMap().get(key).getDetectedObject();
 
-                float textWidth = paint.measureText("Tracking ID: " + o.getTrackingId());
-                float lineHeight = TEXT_SIZE + STROKE_WIDTH;
-                float yLabelOffset = -lineHeight;
+            float textWidth = paint.measureText("Tracking ID: " + o.getTrackingId());
+            float lineHeight = TEXT_SIZE + STROKE_WIDTH;
+            float yLabelOffset = -lineHeight;
 
+            canvas.drawRect(rect.left, rect.top, rect.right, rect.bottom, paint);
 
-                RectF rect = new RectF(o.getBoundingBox());
-                // If the image is flipped, the left will be translated to right, and the right to left.
-                float x0 = translateX(rect.left);
-                float x1 = translateX(rect.right);
-                rect.left = Math.min(x0, x1);
-                rect.right = Math.max(x0, x1);
-                rect.top = translateY(rect.top);
-                rect.bottom = translateY(rect.bottom);
+            // Draws other object info.
+            canvas.drawRect(
+                    rect.left - STROKE_WIDTH,
+                    rect.top + yLabelOffset,
+                    rect.left + textWidth + (2 * STROKE_WIDTH),
+                    rect.top,
+                    paint);
+            yLabelOffset += TEXT_SIZE;
+            canvas.drawText(
+                    "Tracking ID: " + o.getTrackingId(),
+                    rect.left,
+                    rect.top + yLabelOffset,
+                    paint2);
+            yLabelOffset += lineHeight;
 
-
-
-
-               double coordx = ((rect.left + rect.right) / 2.0) / getWidth() * 2 - 1;
-               double coordy = ((rect.top + rect.bottom) / 2.0) / getHeight() * -2 + 1;
-
-                coordinates = new float[]{(float) coordx, (float)coordy};
-                Log.d("", "coord: " + coordx + " , " + coordy);
-
-
-
-                //
-                // Log.d(TAG,  "--------------------------------" + image.getWidth() + ", " + image.getHeight());
-                //float width =  rect.bottom - rect.top;
-                canvas.drawRect(rect.left, rect.top, rect.right, rect.bottom, paint);
-
-
-                // Draws other object info.
-                canvas.drawRect(
-                        rect.left - STROKE_WIDTH,
-                        rect.top + yLabelOffset,
-                        rect.left + textWidth + (2 * STROKE_WIDTH),
-                        rect.top,
-                        paint);
-                yLabelOffset += TEXT_SIZE;
+            for (DetectedObject.Label label : o.getLabels()) {
+                canvas.drawText(label.getText(), rect.left, rect.top + yLabelOffset, paint2);
+                yLabelOffset += lineHeight;
                 canvas.drawText(
-                        "Tracking ID: " + o.getTrackingId(),
+                        String.format(Locale.US, LABEL_FORMAT, label.getConfidence() * 100, label.getIndex()),
                         rect.left,
                         rect.top + yLabelOffset,
                         paint2);
+
                 yLabelOffset += lineHeight;
-
-                for (DetectedObject.Label label : o.getLabels()) {
-                    canvas.drawText(label.getText(), rect.left, rect.top + yLabelOffset, paint2);
-                    yLabelOffset += lineHeight;
-                    canvas.drawText(
-                            String.format(Locale.US, LABEL_FORMAT, label.getConfidence() * 100, label.getIndex()),
-                            rect.left,
-                            rect.top + yLabelOffset,
-                            paint2);
-
-                    yLabelOffset += lineHeight;
-                }
             }
+
         }
-
-
-       // Log.d("", "w : " + getWidth());
-       // Log.d("", "h : " + getHeight());
-       // Log.d("", "s : " + scaleFactor);
-       // Log.d("", "O : " + postScaleWidthOffset);
-
-
-
-
-
-
-
     }
-    public float translateX(float x) {
-       // if (overlay.isImageFlipped) {
-        //    return overlay.getWidth() - (scale(x) - overlay.postScaleWidthOffset);
-       // } else {
-            return scale(x) - postScaleWidthOffset;
-       // }
-    }
+    public void render(ObjectDetectMap odMap) {
+        this.odMap = odMap;
 
-    /**
-     * Adjusts the y coordinate from the image's coordinate system to the view coordinate system.
-     */
-    public float translateY(float y) {
-        return scale(y) - postScaleHeightOffset;
-    }
-
-    public float scale(float imagePixel) {
-
-        return imagePixel * scaleFactor;
-    }
-    public void setDetectedObjects(List<DetectedObject> detectedObjects, int width, int height) {
-        this.detectedObjects = detectedObjects;
-        this.imageWidth = height > width ? width : height;
-        this.imageHeight = height > width ? height : width;
         this.invalidate();
-       // Log.d("", detectedObjects.size() + "----111인식");
-
-        //for (DetectedObject o : detectedObjects) {
-        //    Log.d("", "ID : " + o.getTrackingId());
-        //    Log.d("", "LABEL : " + (o.getLabels().size() > 0 ? o.getLabels().get(0).getText() : ""));
-        //    Log.d("", "BBOX : " + o.getBoundingBox());
-        //}
-
     }
 
 }

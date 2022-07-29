@@ -385,7 +385,7 @@ public abstract class DefaultAREngineActivity extends DeafultEngineActivity impl
             desiredCpuImageSize.getWidth(),
             desiredCpuImageSize.getHeight(),
             ImageFormat.YUV_420_888,
-            2);
+            20);
     cpuImageReader.setOnImageAvailableListener(this, backgroundHandler);
 
     // When ARCore is running, make sure it also updates our CPU image surface.
