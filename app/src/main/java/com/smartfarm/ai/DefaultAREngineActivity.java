@@ -16,10 +16,8 @@
 
 package com.smartfarm.ai;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.ImageFormat;
-import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -28,61 +26,29 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
-import android.media.Image;
 import android.media.ImageReader;
 import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Size;
-import android.view.MotionEvent;
 import android.view.Surface;
-import android.widget.LinearLayout;
-import android.widget.Switch;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.ar.core.Anchor;
-import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Camera;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
-import com.google.ar.core.HitResult;
-import com.google.ar.core.Plane;
-import com.google.ar.core.Point;
-import com.google.ar.core.Point.OrientationMode;
-import com.google.ar.core.PointCloud;
 import com.google.ar.core.Session;
 import com.google.ar.core.SharedCamera;
-import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
-import com.google.ar.core.exceptions.UnavailableException;
-import com.google.mlkit.common.model.LocalModel;
-import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.objects.DetectedObject;
-import com.google.mlkit.vision.objects.ObjectDetection;
-import com.google.mlkit.vision.objects.ObjectDetector;
-import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions;
 import com.smartfarm.common.helpers.CameraPermissionHelper;
-import com.smartfarm.common.helpers.DisplayRotationHelper;
-import com.smartfarm.common.helpers.FullScreenHelper;
-import com.smartfarm.common.helpers.SnackbarHelper;
 import com.smartfarm.common.helpers.TrackingStateHelper;
 import com.smartfarm.common.rendering.BackgroundRenderer;
 import com.smartfarm.core.ARUtil;
 import com.smartfarm.core.Scene;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -92,12 +58,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public abstract class DefaultAREngineActivity extends AppCompatActivity implements GLSurfaceView.Renderer, ImageReader.OnImageAvailableListener {
+public abstract class DefaultAREngineActivity extends DeafultEngineActivity implements ImageReader.OnImageAvailableListener {
 
   private static final String TAG = DefaultAREngineActivity.class.getSimpleName();
-
-  // GL Surface used to draw camera preview image.
-  private GLSurfaceView canvas;
 
   // ARCore session that supports camera sharing.
   public Session sharedSession;
@@ -114,12 +77,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
   // Camera device. Used by both non-AR and AR modes.
   private CameraDevice cameraDevice;
 
-  // Looper handler thread.
-  private HandlerThread backgroundThread;
-
-  // Looper handler.
-  private Handler backgroundHandler;
-
   // ARCore shared camera instance, obtained from ARCore session that supports sharing.
   private SharedCamera sharedCamera;
 
@@ -132,9 +89,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
   // Whether ARCore is currently active.
   protected boolean arcoreActive;
 
-  // Whether the GL surface has been created.
-  private boolean surfaceCreated;
-
   /**
    * Whether an error was thrown during session creation.
    */
@@ -146,8 +100,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
   // Image reader that continuously processes CPU images.
   private ImageReader cpuImageReader;
 
-
-  private DisplayRotationHelper displayRotationHelper;
   private final TrackingStateHelper trackingStateHelper = new TrackingStateHelper(this);
 
   // Prevent any changes to camera capture session after CameraManager.openCamera() is called, but
@@ -193,21 +145,11 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
         }
       };
 
+  // GL surface created callback. Will be called on the GL thread.
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
-
-    // GL surface view that renders camera preview image.
-    canvas = findViewById(R.id.glsurfaceview);
-    canvas.setPreserveEGLContextOnPause(true);
-    canvas.setEGLContextClientVersion(2);
-    canvas.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
-    canvas.setRenderer(this);
-    canvas.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-
-    // Helpers, see hello_ar_java sample to learn more.
-    displayRotationHelper = new DisplayRotationHelper(this);
+  public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+   super.onSurfaceCreated(gl, config);
+    openCamera();
   }
 
   @Override
@@ -299,16 +241,12 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
   }
   public abstract BackgroundRenderer getBackgroundRenderer();
 
-
-
   // Called when starting non-AR mode or switching to non-AR mode.
   // Also called when app starts in AR mode, or resumes in AR mode.
   private void setRepeatingCaptureRequest() {
     try {
-      setCameraEffects(previewCaptureRequestBuilder);
 
-      captureSession.setRepeatingRequest(
-          previewCaptureRequestBuilder.build(), cameraCaptureCallback, backgroundHandler);
+      captureSession.setRepeatingRequest(previewCaptureRequestBuilder.build(), cameraCaptureCallback, backgroundHandler);
     } catch (CameraAccessException e) {
       Log.e(TAG, "Failed to set repeating request", e);
     }
@@ -396,27 +334,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
       cameraDevice.createCaptureSession(surfaceList, wrappedCallback, backgroundHandler);
     } catch (CameraAccessException e) {
       Log.e(TAG, "CameraAccessException", e);
-    }
-  }
-
-  // Start background handler thread, used to run callbacks without blocking UI thread.
-  private void startBackgroundThread() {
-    backgroundThread = new HandlerThread("sharedCameraBackground");
-    backgroundThread.start();
-    backgroundHandler = new Handler(backgroundThread.getLooper());
-  }
-
-  // Stop background handler thread.
-  private void stopBackgroundThread() {
-    if (backgroundThread != null) {
-      backgroundThread.quitSafely();
-      try {
-        backgroundThread.join();
-        backgroundThread = null;
-        backgroundHandler = null;
-      } catch (InterruptedException e) {
-        Log.e(TAG, "Interrupted while trying to join background handler thread", e);
-      }
     }
   }
 
@@ -539,40 +456,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
     }
   }
 
-  private <T> boolean checkIfKeyCanCauseDelay(CaptureRequest.Key<T> key) {
-    if (Build.VERSION.SDK_INT >= 28) {
-      // On Android P and later, return true if key is difficult to apply per-frame.
-      return keysThatCanCauseCaptureDelaysWhenModified.contains(key);
-    } else {
-      // On earlier Android versions, log a warning since there is no API to determine whether
-      // the key is difficult to apply per-frame. Certain keys such as CONTROL_AE_TARGET_FPS_RANGE
-      // are known to cause a noticeable delay on certain devices.
-      // If avoiding unexpected capture delays when switching between non-AR and AR modes is
-      // important, verify the runtime behavior on each pre-Android P device on which the app will
-      // be distributed. Note that this device-specific runtime behavior may change when the
-      // device's operating system is updated.
-      Log.w(
-          TAG,
-          "Changing "
-              + key
-              + " may cause a noticeable capture delay. Please verify actual runtime behavior on"
-              + " specific pre-Android P devices that this app will be distributed on.");
-      // Allow the change since we're unable to determine whether it can cause unexpected delays.
-      return false;
-    }
-  }
-
-  // If possible, apply effect in non-AR mode, to help visually distinguish between from AR mode.
-  private void setCameraEffects(CaptureRequest.Builder captureBuilder) {
-    if (checkIfKeyCanCauseDelay(CaptureRequest.CONTROL_EFFECT_MODE)) {
-      Log.w(TAG, "Not setting CONTROL_EFFECT_MODE since it can cause delays between transitions.");
-    } else {
-      Log.d(TAG, "Setting CONTROL_EFFECT_MODE to SEPIA in non-AR mode.");
-      captureBuilder.set(
-          CaptureRequest.CONTROL_EFFECT_MODE, CaptureRequest.CONTROL_EFFECT_MODE_SEPIA);
-    }
-  }
-
   // Close the camera device.
   private void closeCamera() {
     if (captureSession != null) {
@@ -597,48 +480,6 @@ public abstract class DefaultAREngineActivity extends AppCompatActivity implemen
 
   }
 
-  // Android permission request callback.
-  @Override
-  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
-    super.onRequestPermissionsResult(requestCode, permissions, results);
-    if (!CameraPermissionHelper.hasCameraPermission(this)) {
-      Toast.makeText(getApplicationContext(), "Camera permission is needed to run this application", Toast.LENGTH_LONG).show();
-      if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(this)) {
-        // Permission denied with checking "Do not ask again".
-        CameraPermissionHelper.launchPermissionSettings(this);
-      }
-      finish();
-    }
-  }
-
-  // Android focus change callback.
-  @Override
-  public void onWindowFocusChanged(boolean hasFocus) {
-    super.onWindowFocusChanged(hasFocus);
-    FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus);
-  }
-
-  private List<Scene> scenes = new ArrayList<Scene>();
-
-  protected abstract Scene createScene();
-
-  // GL surface created callback. Will be called on the GL thread.
-  @Override
-  public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-    surfaceCreated = true;
-
-    // Set GL clear color to black.
-    GLES20.glClearColor(0f, 0f, 0f, 1.0f);
-    scenes.add(createScene());
-    openCamera();
-  }
-
-  // GL surface changed callback. Will be called on the GL thread.
-  @Override
-  public void onSurfaceChanged(GL10 gl, int width, int height) {
-    GLES20.glViewport(0, 0, width, height);
-    displayRotationHelper.onSurfaceChanged(width, height);
-  }
   // GL draw callback. Will be called each frame on the GL thread.
   @Override
   public void onDrawFrame(GL10 gl) {

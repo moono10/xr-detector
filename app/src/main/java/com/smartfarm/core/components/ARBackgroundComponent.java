@@ -24,6 +24,5 @@ public class ARBackgroundComponent extends Component {
     public void draw(float[] viewmtx, float[] projmtx, Frame frame) {
         // If frame is ready, render camera preview image to the GL surface.
         backgroundRenderer.draw(frame);
-
     }
 }
