@@ -18,23 +18,23 @@ package com.smartfarm.ai;
 
 
 import android.media.ImageReader;
-import android.opengl.GLES20;
 import android.os.Bundle;
-import android.os.PersistableBundle;
-import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import com.smartfarm.common.rendering.LineRenderer;
 import com.smartfarm.common.rendering.geometry.LineString;
 import com.smartfarm.common.rendering.geometry.Vector3;
 import com.smartfarm.core.Color4;
 import com.smartfarm.core.Node;
 import com.smartfarm.core.Scene;
+import com.smartfarm.core.components.ARSurfaceDetectComponent;
+import com.smartfarm.core.components.ARTrackedPointComponent;
+import com.smartfarm.core.components.ARHitTestComponent;
 import com.smartfarm.core.components.LineRendererComponent;
+import com.smartfarm.core.components.ObjectDetectComponent;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -59,6 +59,7 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
     private static final Short AUTOMATOR_DEFAULT = 0;
     private static final String AUTOMATOR_KEY = "automator";
 
+    private ObjectDetectComponent odc;
     @Override
     protected Scene createScene() {
 
@@ -88,9 +89,20 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
         xAxis.addComponent(new LineRendererComponent(this, lsz));
         scene.getNodes().add(zAxis);
 
+        Node arTrackedPointCloud = new Node();
+        arTrackedPointCloud.addComponent(new ARTrackedPointComponent(this));
+        scene.getNodes().add(arTrackedPointCloud);
 
+        Node objectDetector = new Node();
+        odc = new ObjectDetectComponent(this);
+        objectDetector.addComponent(odc);
+        scene.getNodes().add(objectDetector);
 
+        scene.getNodes().add(hitTest);
 
+        Node arSurfaceDetector = new Node();
+        arSurfaceDetector.addComponent(new ARSurfaceDetectComponent(this));
+        scene.getNodes().add(arSurfaceDetector);
 
 
 
@@ -101,7 +113,7 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
         return scene;
     }
 
-
+    Node hitTest;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,6 +122,9 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
         if (extraBundle != null && 1 == extraBundle.getShort(AUTOMATOR_KEY, AUTOMATOR_DEFAULT)) {
             automatorRun.set(true);
         }
+
+        hitTest = new Node();
+        hitTest.addComponent(new ARHitTestComponent(this));
 
         // Switch to allow pausing and resuming of ARCore.
         Switch arcoreSwitch = findViewById(R.id.arcore_switch);
@@ -151,6 +166,7 @@ public class SharedCameraActivity extends DefaultAREngineActivity {
     @Override
     public void onImageAvailable(ImageReader imageReader) {
         super.onImageAvailable(imageReader);
+        odc.onImageAvailable(imageReader);
 
         cpuImagesProcessed++;
 

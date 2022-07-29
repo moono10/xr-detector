@@ -1,6 +1,7 @@
 package com.smartfarm.core;
 
 public class Color4 {
+
     private float r;
     private float g;
     private float b;
