@@ -23,6 +23,7 @@ import com.smartfarm.ai.R;
 import com.smartfarm.ai.SharedCameraActivity;
 import com.smartfarm.common.helpers.DisplayRotationHelper;
 import com.smartfarm.common.rendering.ObjectRenderer;
+import com.smartfarm.common.rendering.ObjectWireFrameRenderer;
 import com.smartfarm.common.rendering.geometry.LineString;
 import com.smartfarm.common.rendering.geometry.Ray;
 import com.smartfarm.common.rendering.geometry.Vector3;
@@ -50,7 +51,7 @@ public class ObjectDetectComponent extends Component {
     private float[] viewmtx;
     private float[] projmtx;
 
-    private final ObjectRenderer virtualObject = new ObjectRenderer();
+    private final ObjectWireFrameRenderer virtualObject = new ObjectWireFrameRenderer();
 
     public ObjectDetectComponent(Activity context) {
         this.context = context;
@@ -69,7 +70,7 @@ public class ObjectDetectComponent extends Component {
         objectDetector = ObjectDetection.getClient(customObjectDetectorOptions);
         view = context.findViewById(R.id.customView);
         try {
-            virtualObject.createOnGlThread(context, "models/andy.obj", "models/andy.png");
+            virtualObject.createOnGlThread(context, "models/cube.obj", "models/andy.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -85,13 +86,13 @@ public class ObjectDetectComponent extends Component {
         frame.getCamera().getDisplayOrientedPose().toMatrix(viewmtx2, 0);
         this.viewmtx = viewmtx2;
 
-        float scaleFactor = 0.3f;
+        float scaleFactor = 0.025f;
 
         final float[] colorCorrectionRgba = new float[4];
         frame.getLightEstimate().getColorCorrection(colorCorrectionRgba, 0);
         Set<Integer> keyset = odMap.getMap().keySet();
         for (Integer key : keyset) {
-            if (odMap.getMap().get(key).getAvgDirectionLength() > 0.1) {
+            if (odMap.getMap().get(key).getAvgDirectionLength() > 0.07) {
 
                 virtualObject.updateModelMatrix(odMap.getMap().get(key).getAnchorMatrix(), scaleFactor);
                 virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, new float[]{66.0f, 133.0f, 244.0f, 255.0f});

@@ -369,6 +369,7 @@ public abstract class DefaultAREngineActivity extends DeafultEngineActivity impl
       // Enable auto focus mode while ARCore is running.
       Config config = sharedSession.getConfig();
       config.setFocusMode(Config.FocusMode.AUTO);
+
       sharedSession.configure(config);
     }
 
